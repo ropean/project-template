@@ -80,8 +80,10 @@ keep persistent state under `/data`, and run as a non-root user in the container
 ## Git
 
 - `main` is the default branch; `release` triggers production deploys.
-- Commit messages follow Conventional Commits (`feat:`, `fix:`, `docs:`,
-  `chore:`, `refactor:`, `test:`, `ci:`), in English and in the imperative mood.
+- Commit messages **must be English**, follow Conventional Commits (`feat:`,
+  `fix:`, `docs:`, `chore:`, `refactor:`, `test:`, `ci:`), and use the
+  imperative mood. Enforced by `.githooks/commit-msg` locally and by the
+  `commit-messages` CI job (`scripts/check-commit-msg.sh` rejects CJK text).
 
 ## License
 

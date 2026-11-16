@@ -13,7 +13,8 @@ in [CLAUDE.md](CLAUDE.md).
 | `.editorconfig` | Charset, indentation, final newline, trailing whitespace |
 | `scripts/check.sh` | One check entry point for the git hook and CI; stack tools plug in here |
 | `.githooks/pre-commit` | Runs `scripts/check.sh --staged` (`git config core.hooksPath .githooks`) |
-| `.github/workflows/ci.yml` | Runs `scripts/check.sh` + gitleaks secret scan |
+| `.githooks/commit-msg` | Rejects non-English (CJK) commit messages via `scripts/check-commit-msg.sh` |
+| `.github/workflows/ci.yml` | Runs `scripts/check.sh`, the commit-message check, and a gitleaks secret scan |
 | `.github/workflows/deploy-ssh-docker.yml` | `release` branch -> GHCR image -> VPS via SSH + Docker Compose |
 | `deploy/docker/` | Dockerfile (placeholder) and production compose file |
 | `.github/dependabot.yml` | Monthly updates for Actions and the base image |

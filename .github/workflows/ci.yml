@@ -29,6 +29,29 @@ jobs:
       - name: Run checks
         run: scripts/check.sh
 
+  commit-messages:
+    # Only on push/PR; skipped when called from the deploy workflow.
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Commit messages are English
+        env:
+          BEFORE: ${{ github.event.before }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if [ -n "$PR_BASE" ]; then
+            range="$PR_BASE..$PR_HEAD"
+          elif [ -n "$BEFORE" ] && ! echo "$BEFORE" | grep -q '^0*$'; then
+            range="$BEFORE..$GITHUB_SHA"
+          else
+            range="$GITHUB_SHA"  # new branch: check every reachable commit
+          fi
+          scripts/check-commit-msg.sh --range "$range"
+
   secrets:
     runs-on: ubuntu-latest
     steps:
