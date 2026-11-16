@@ -29,6 +29,19 @@ working in this repository.
 - Run `scripts/check.sh` before every commit. Never bypass the hook with
   `--no-verify`. Fix the cause instead.
 
+### Dependency versions
+
+- **Every third-party dependency must be pinned to an exact version**, in every
+  language and tool: `1.2.3`, never `^1.2.3`, `~1.2.3`, `>=1.2`, `1.x`, `*`,
+  or `latest`. Examples: `pnpm add --save-exact` (or `save-exact=true` in
+  `.npmrc`), `package==1.2.3` in Python, `=1.2.3` in `Cargo.toml`.
+- Commit the lockfile (`pnpm-lock.yaml`, `uv.lock`, `poetry.lock`, `go.sum`,
+  `Cargo.lock`, ...) alongside the manifest.
+- This also covers Docker base images (`node:22.11.0-alpine`, never `node:latest`
+  or `node:22`), GitHub Actions (pin a release tag or commit SHA), and tools
+  installed in scripts or CI.
+- Upgrade deliberately (e.g. via Dependabot PRs), never through loose ranges.
+
 ### Stack conventions
 
 **Node / TypeScript**
@@ -47,7 +60,7 @@ working in this repository.
 
   Then call `run_step "check" pnpm run check` in `scripts/check.sh` and
   add the Node setup steps in `.github/workflows/ci.yml`.
-- Pin exact dependency versions.
+- Pin exact dependency versions (see [Dependency versions](#dependency-versions)).
 
 Other stacks: use the ecosystem's standard formatter and linter (e.g. ruff for
 Python, gofmt + go vet for Go, rustfmt + clippy for Rust) and wire them in the same way.
