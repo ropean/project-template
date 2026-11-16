@@ -12,5 +12,5 @@
 #   - Persist state only under /data (a named volume); log to stdout/stderr.
 #   - Read configuration from environment variables (.env on the server).
 
-FROM alpine:3.20
+FROM alpine:3.24
 RUN echo "deploy/docker/Dockerfile is still the template placeholder." >&2 && exit 1
