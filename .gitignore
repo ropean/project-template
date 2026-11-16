@@ -1,0 +1,194 @@
+# ---------------------------------------------------------------------------
+# Environment / secrets
+# ---------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.keystore
+*.jks
+id_rsa*
+id_ed25519*
+
+# ---------------------------------------------------------------------------
+# Build output, caches, runtime data
+# ---------------------------------------------------------------------------
+/build/
+/dist/
+/out/
+/coverage/
+/tmp/
+/data/
+.cache/
+*.log
+logs/
+
+# Local databases (keep real data in a mounted volume, not the repo)
+*.sqlite
+*.sqlite3
+*.db
+*.sqlite-journal
+*.sqlite3-journal
+*.db-journal
+*-wal
+*-shm
+
+# ---------------------------------------------------------------------------
+# Language toolchains (harmless when unused)
+# ---------------------------------------------------------------------------
+# Node / Bun / Deno
+node_modules/
+.pnpm-store/
+.npm/
+.yarn/*
+!.yarn/releases
+.eslintcache
+.tsbuildinfo
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.next/
+.nuxt/
+.svelte-kit/
+.astro/
+.vercel/
+.wrangler/
+.dev.vars
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+
+# PHP
+/vendor/
+composer.phar
+.phpunit.result.cache
+.phpunit.cache/
+.php-cs-fixer.cache
+
+# Go
+/bin/
+*.test
+*.out
+
+# Rust
+/target/
+
+# Java / Kotlin / Gradle / Maven
+.gradle/
+*.class
+
+# .NET (bin/ and obj/ are project-relative; add them per project)
+*.user
+
+# ---------------------------------------------------------------------------
+# Docker
+# ---------------------------------------------------------------------------
+docker-compose.override.yml
+docker-compose.override.yaml
+compose.override.yml
+compose.override.yaml
+
+# ---------------------------------------------------------------------------
+# Editors / IDEs
+# ---------------------------------------------------------------------------
+# VS Code: keep shared settings, ignore personal state
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
+*.code-workspace
+.history/
+
+# JetBrains (IntelliJ, WebStorm, PhpStorm, PyCharm, GoLand, Rider, Fleet)
+.idea/
+*.iml
+*.ipr
+*.iws
+.fleet/
+
+# Visual Studio
+.vs/
+
+# Cursor / Zed / Sublime / Nova / Eclipse / NetBeans
+.cursor/
+.zed/
+*.sublime-project
+*.sublime-workspace
+.nova/
+.project
+.settings/
+.classpath
+nbproject/
+
+# Vim / Emacs
+*.swp
+*.swo
+*.swn
+*~
+\#*\#
+.\#*
+Session.vim
+.netrwhist
+tags
+
+# ---------------------------------------------------------------------------
+# AI coding assistants (keep shared config, ignore local state)
+# ---------------------------------------------------------------------------
+.claude/settings.local.json
+.claude/worktrees/
+CLAUDE.local.md
+.aider*
+
+# ---------------------------------------------------------------------------
+# Operating systems
+# ---------------------------------------------------------------------------
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+.fseventsd
+.TemporaryItems
+.VolumeIcon.icns
+.DocumentRevisions-V100
+.apdisk
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+desktop.ini
+$RECYCLE.BIN/
+*.lnk
+*.stackdump
+
+# Linux
+.directory
+.Trash-*
+.nfs*
+.fuse_hidden*
+
+# ---------------------------------------------------------------------------
+# Misc
+# ---------------------------------------------------------------------------
+*.bak
+*.orig
+*.rej
+*.tmp

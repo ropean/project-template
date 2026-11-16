@@ -1,0 +1,30 @@
+# Keep the build context small and secret-free.
+# The image is built from the repo root (context: .) with deploy/docker/Dockerfile.
+.git
+.github
+.githooks
+.claude
+.vscode
+.idea
+docs
+**/*.md
+!README.md
+
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+node_modules
+**/node_modules
+vendor
+target
+dist
+build
+coverage
+data
+tmp
+*.log
+
+deploy/docker/docker-compose*.yml

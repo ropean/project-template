@@ -1,0 +1,128 @@
+name: Deploy via SSH (Docker)
+
+# Push to `release` (or `release*`) -> run CI -> build image -> push to GHCR
+# -> copy docker-compose.yml to the VPS -> pull + restart -> wait for healthy.
+# Setup (secrets, server prerequisites, rollback): docs/deployment.md
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - release
+      - release*
+
+permissions:
+  contents: read
+  packages: write
+
+# Never run two deployments of the same repo at once; queue instead of cancelling.
+concurrency:
+  group: deploy-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  build:
+    needs: ci
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.meta.outputs.image }}
+    steps:
+      - uses: actions/checkout@v6
+
+      # GHCR image names must be lowercase.
+      - name: Resolve image name
+        id: meta
+        run: echo "image=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: deploy/docker/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.image }}:latest
+            ${{ steps.meta.outputs.image }}:${{ github.sha }}
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: VPS
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Copy docker-compose.yml to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          source: deploy/docker/docker-compose.yml
+          target: ${{ secrets.SSH_DEPLOY_PATH }}
+          strip_components: 2
+
+      - name: Pull and restart on server
+        uses: appleboy/ssh-action@v1
+        env:
+          IMAGE: ${{ needs.build.outputs.image }}
+          IMAGE_TAG: ${{ github.sha }}
+          GHCR_USER: ${{ github.repository_owner }}
+          GHCR_PAT: ${{ secrets.GHCR_PAT }}
+          DEPLOY_PATH: ${{ secrets.SSH_DEPLOY_PATH }}
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          envs: IMAGE,IMAGE_TAG,GHCR_USER,GHCR_PAT,DEPLOY_PATH
+          script: |
+            set -eu
+            echo "$GHCR_PAT" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+            cd "$DEPLOY_PATH"
+            test -f .env || { echo "Missing $DEPLOY_PATH/.env (see docs/deployment.md)"; exit 1; }
+
+            # Pin the exact commit's image; IMAGE/IMAGE_TAG are read by docker-compose.yml.
+            # Kept in a file so manual runs can reuse the same flags (docs/deployment.md).
+            printf 'IMAGE=%s\nIMAGE_TAG=%s\n' "$IMAGE" "$IMAGE_TAG" > .deploy.env
+            dc() { docker compose --env-file .env --env-file .deploy.env "$@"; }
+
+            dc pull
+            # --remove-orphans: drop containers no longer defined in the compose file.
+            dc up -d --remove-orphans
+
+            # Wait up to 120s for every container's healthcheck (if one is defined).
+            for i in $(seq 1 24); do
+              unhealthy=0
+              for id in $(dc ps -q); do
+                status=$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "$id")
+                case "$status" in healthy|running) ;; *) unhealthy=1 ;; esac
+              done
+              [ "$unhealthy" -eq 0 ] && break
+              [ "$i" -eq 24 ] && { dc ps; dc logs --tail 100; exit 1; }
+              sleep 5
+            done
+            dc ps
+
+            docker image prune -f
+
+      - name: Deployment summary
+        if: always()
+        run: |
+          cat >> "$GITHUB_STEP_SUMMARY" << EOF
+          ## Deployment ${{ job.status }}
+
+          | Item | Details |
+          |------|---------|
+          | **Image** | \`${{ needs.build.outputs.image }}:${{ github.sha }}\` |
+          | **Ref** | \`${{ github.ref_name }}\` |
+          | **Time** | $(date -u +'%Y-%m-%d %H:%M:%S UTC') |
+          EOF

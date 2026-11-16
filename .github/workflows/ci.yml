@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  # Lets deploy-ssh-docker.yml gate deployment on the same checks.
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      # Add the stack's toolchain setup here (before scripts/check.sh), e.g. for Node:
+      #   - uses: pnpm/action-setup@v4
+      #   - uses: actions/setup-node@v6
+      #     with: { node-version-file: .nvmrc, cache: pnpm }
+      #   - run: pnpm install --frozen-lockfile
+
+      - name: Run checks
+        run: scripts/check.sh
+
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      # Free for personal accounts; organization-owned repos need GITLEAKS_LICENSE.
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

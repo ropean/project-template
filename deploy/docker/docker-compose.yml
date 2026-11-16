@@ -1,0 +1,33 @@
+# Production compose file. CI copies it to SSH_DEPLOY_PATH on the server and runs
+#   docker compose --env-file .env --env-file .deploy.env up -d
+# where .deploy.env (written by CI) pins IMAGE and IMAGE_TAG to the deployed commit.
+#
+# TODO(new project): rename `name`, the service, and the volume; set the
+# container port; adjust the healthcheck to the app's health endpoint and
+# to a tool the image actually has (wget/curl, or the app's own binary).
+
+name: app
+
+services:
+  app:
+    image: ${IMAGE:-ghcr.io/owner/repo}:${IMAGE_TAG:-latest}
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile
+    restart: unless-stopped
+    ports:
+      # Bound to 127.0.0.1: the app sits behind a reverse proxy on the host.
+      # Pick an APP_PORT not used by any other project on the same server.
+      - '127.0.0.1:${APP_PORT:-3000}:3000'
+    env_file: .env
+    volumes:
+      - app-data:/data
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1:3000/healthz >/dev/null || exit 1']
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+
+volumes:
+  app-data:
